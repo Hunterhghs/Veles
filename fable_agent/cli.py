@@ -107,8 +107,13 @@ def main(argv: list[str] | None = None) -> int:
     p_run = sub.add_parser("run", help="Run the orchestrator on a task.")
     p_run.add_argument("task", help="The task to perform.")
     p_run.add_argument("--workspace", default=".", help="Project directory to work in.")
-    p_run.add_argument("--provider", default=None, help="anthropic | openai | openai-compatible")
-    p_run.add_argument("--model", default=None, help="Model name, e.g. claude-sonnet-4-5 or gpt-4o.")
+    p_run.add_argument(
+        "--provider",
+        default=None,
+        help="anthropic | openai | ollama | lmstudio | openai-compatible "
+        "(ollama/lmstudio/openai-compatible need no API key)",
+    )
+    p_run.add_argument("--model", default=None, help="Model name, e.g. claude-sonnet-4-5, gpt-4o, or qwen2.5-coder.")
     p_run.add_argument("--base-url", default=None, help="Base URL for OpenAI-compatible endpoints.")
     p_run.set_defaults(func=cmd_run)
 

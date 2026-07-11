@@ -2,6 +2,8 @@
 
 Also works with any OpenAI-compatible endpoint (Reasonix, OpenRouter,
 Ollama, LM Studio, vLLM, Together, Groq, ...) by passing ``base_url``.
+For local/self-hosted endpoints that need no authentication, pass
+``api_key=None`` and the Authorization header is omitted entirely.
 """
 
 from __future__ import annotations
@@ -19,7 +21,7 @@ DEFAULT_BASE_URL = "https://api.openai.com/v1"
 class OpenAIProvider(LLMProvider):
     def __init__(
         self,
-        api_key: str,
+        api_key: str | None,
         model: str = "gpt-4o",
         max_tokens: int = 8192,
         temperature: float = 0.2,
@@ -63,12 +65,13 @@ class OpenAIProvider(LLMProvider):
                 for t in tools
             ]
 
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+
         resp = self.client.post(
             f"{self.base_url}/chat/completions",
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            },
+            headers=headers,
             json=payload,
         )
         resp.raise_for_status()

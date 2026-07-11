@@ -26,7 +26,7 @@ An open-source, extensible AI coding agent framework in Python, inspired by Fabl
 ## Features
 
 - **Orchestrator & sub-agents** — the orchestrator never edits files itself; it plans and delegates. Sub-agents get role-appropriate tool access (the Architect can't write, the Verifier can run tests but not patch).
-- **Model-agnostic** — first-class Anthropic support plus any OpenAI-compatible endpoint (OpenAI, Reasonix, OpenRouter, Ollama, LM Studio, vLLM, Groq, ...). Swap providers with one flag.
+- **Model-agnostic, key-optional** — first-class Anthropic support plus any OpenAI-compatible endpoint (OpenAI, Reasonix, OpenRouter, Ollama, LM Studio, vLLM, Groq, ...). Swap providers with one flag; runs entirely without an API key against local runtimes (`--provider ollama`).
 - **Tooling suite** — file read/write, exact-match diff editing, directory listing, regex search, glob, and shell execution. All file access is sandboxed to the chosen workspace directory.
 - **Memory & context store** — agents persist task summaries, decisions, and project facts. New sessions start with relevant memory injected, so context survives across runs (and is shared with external agents via MCP).
 - **Exportable interface** — an MCP server exposes the tools, the memory, the full agent pipeline, and the system prompts. A CLI wraps everything for humans and scripts.
@@ -42,21 +42,48 @@ pip install -e ".[mcp]"        # or: pip install -e . (without the MCP server)
 
 Requires Python 3.10+.
 
+## Running without an API key
+
+Fable does not require an API key. Point it at any local, key-less model runtime:
+
+```bash
+# Ollama (default: http://localhost:11434/v1, model qwen2.5-coder)
+ollama pull qwen2.5-coder
+fable run "Fix the failing tests" --provider ollama
+
+# LM Studio (default: http://localhost:1234/v1)
+fable run "Add docstrings to utils.py" --provider lmstudio --model your-loaded-model
+
+# Any other OpenAI-compatible server (vLLM, llama.cpp, Reasonix local, ...)
+fable run "your task" --provider openai-compatible \
+    --base-url http://localhost:8000/v1 --model your-model
+```
+
+When no key is configured, the Authorization header is simply omitted. Everything else — the tool suite, memory store, MCP server, prompts, and CLI inspection commands (`fable tools|prompts|memory`) — never needed a key in the first place; only `fable run` and the MCP `run_agent` tool talk to a model at all.
+
+To make key-less local mode the default for a project, put it in `fable.toml`:
+
+```toml
+[fable]
+provider = "ollama"
+model = "qwen2.5-coder"
+```
+
 ## Configuration
 
-Set an API key for your provider (checked in this order):
+For cloud providers, set an API key (checked in this order):
 
 ```bash
 export FABLE_API_KEY=...        # works for any provider
 export ANTHROPIC_API_KEY=...    # for provider=anthropic
-export OPENAI_API_KEY=...       # for provider=openai / openai-compatible
+export OPENAI_API_KEY=...       # for provider=openai
 ```
 
 Optionally drop a `fable.toml` in your project root:
 
 ```toml
 [fable]
-provider = "anthropic"            # anthropic | openai | openai-compatible
+provider = "anthropic"            # anthropic | openai | ollama | lmstudio | openai-compatible
 model = "claude-sonnet-4-5"
 # base_url = "http://localhost:11434/v1"   # for openai-compatible endpoints
 memory_backend = "sqlite"         # sqlite | json
@@ -74,8 +101,7 @@ fable run "Add input validation to the signup endpoint" --workspace ~/code/myapp
 
 # Use a different provider/model
 fable run "Fix the failing tests" --provider openai --model gpt-4o
-fable run "Refactor utils.py" --provider openai-compatible \
-    --base-url http://localhost:11434/v1 --model qwen2.5-coder
+fable run "Refactor utils.py" --provider ollama          # local, no API key
 
 # Inspect what Fable exports
 fable tools                 # tool suite with schemas

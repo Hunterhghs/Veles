@@ -19,7 +19,8 @@ from typing import Any
 class FableConfig:
     """Runtime configuration for agents, providers, and storage."""
 
-    # LLM provider: "anthropic", "openai", or "openai-compatible"
+    # LLM provider: "anthropic", "openai", "ollama", "lmstudio", or
+    # "openai-compatible". The last three run without an API key.
     provider: str = "anthropic"
     model: str = "claude-sonnet-4-5"
     api_key: str | None = None
