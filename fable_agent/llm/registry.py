@@ -41,6 +41,21 @@ def create_provider(config: FableConfig) -> LLMProvider:
             base_url=config.base_url,
         )
 
+    if provider == "deepseek":
+        from fable_agent.llm.openai_provider import OpenAIProvider
+
+        _require_key(config, "DEEPSEEK_API_KEY")
+        model = config.model
+        if model == FableConfig.model:
+            model = "deepseek-chat"
+        return OpenAIProvider(
+            api_key=config.api_key,
+            model=model,
+            max_tokens=config.max_tokens,
+            temperature=config.temperature,
+            base_url=config.base_url or "https://api.deepseek.com/v1",
+        )
+
     if provider in KEYLESS_PROVIDERS:
         from fable_agent.llm.openai_provider import OpenAIProvider
 
@@ -68,7 +83,7 @@ def create_provider(config: FableConfig) -> LLMProvider:
 
     raise ValueError(
         f"Unknown provider {provider!r}. Expected 'anthropic', 'openai', "
-        "'ollama', 'lmstudio', or 'openai-compatible'."
+        "'deepseek', 'ollama', 'lmstudio', or 'openai-compatible'."
     )
 
 

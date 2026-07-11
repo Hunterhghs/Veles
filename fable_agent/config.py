@@ -19,8 +19,8 @@ from typing import Any
 class FableConfig:
     """Runtime configuration for agents, providers, and storage."""
 
-    # LLM provider: "anthropic", "openai", "ollama", "lmstudio", or
-    # "openai-compatible". The last three run without an API key.
+    # LLM provider: "anthropic", "openai", "deepseek", "ollama", "lmstudio",
+    # or "openai-compatible". The last three run without an API key.
     provider: str = "anthropic"
     model: str = "claude-sonnet-4-5"
     api_key: str | None = None
@@ -87,6 +87,7 @@ def resolve_api_key(provider: str) -> str | None:
     candidates = {
         "anthropic": ["FABLE_API_KEY", "ANTHROPIC_API_KEY"],
         "openai": ["FABLE_API_KEY", "OPENAI_API_KEY"],
+        "deepseek": ["FABLE_API_KEY", "DEEPSEEK_API_KEY"],
         "openai-compatible": ["FABLE_API_KEY", "OPENAI_API_KEY"],
     }
     for env in candidates.get(provider, ["FABLE_API_KEY"]):

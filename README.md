@@ -77,13 +77,14 @@ For cloud providers, set an API key (checked in this order):
 export FABLE_API_KEY=...        # works for any provider
 export ANTHROPIC_API_KEY=...    # for provider=anthropic
 export OPENAI_API_KEY=...       # for provider=openai
+export DEEPSEEK_API_KEY=...     # for provider=deepseek
 ```
 
 Optionally drop a `fable.toml` in your project root:
 
 ```toml
 [fable]
-provider = "anthropic"            # anthropic | openai | ollama | lmstudio | openai-compatible
+provider = "anthropic"            # anthropic | openai | deepseek | ollama | lmstudio | openai-compatible
 model = "claude-sonnet-4-5"
 # base_url = "http://localhost:11434/v1"   # for openai-compatible endpoints
 memory_backend = "sqlite"         # sqlite | json
@@ -101,6 +102,7 @@ fable run "Add input validation to the signup endpoint" --workspace ~/code/myapp
 
 # Use a different provider/model
 fable run "Fix the failing tests" --provider openai --model gpt-4o
+fable run "Add error handling" --provider deepseek       # deepseek-chat by default
 fable run "Refactor utils.py" --provider ollama          # local, no API key
 
 # Inspect what Fable exports

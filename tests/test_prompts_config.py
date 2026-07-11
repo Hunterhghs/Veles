@@ -107,6 +107,36 @@ class TestKeylessProviders:
             with pytest.raises(ValueError, match="API key"):
                 create_provider(cfg)
 
+    def test_deepseek_preset(self, tmp_path):
+        from fable_agent.llm import create_provider
+
+        cfg = FableConfig(workspace=tmp_path, provider="deepseek", api_key="ds-key")
+        provider = create_provider(cfg)
+        assert provider.base_url == "https://api.deepseek.com/v1"
+        assert provider.model == "deepseek-chat"
+        assert provider.api_key == "ds-key"
+
+        explicit = FableConfig(
+            workspace=tmp_path, provider="deepseek", model="deepseek-reasoner", api_key="ds-key"
+        )
+        assert create_provider(explicit).model == "deepseek-reasoner"
+
+    def test_deepseek_key_from_env(self, tmp_path, monkeypatch):
+        for env in ("FABLE_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY"):
+            monkeypatch.delenv(env, raising=False)
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "env-ds-key")
+        cfg = FableConfig.load(workspace=tmp_path, provider="deepseek")
+        assert cfg.api_key == "env-ds-key"
+
+    def test_deepseek_requires_key(self, tmp_path, monkeypatch):
+        from fable_agent.llm import create_provider
+
+        for env in ("FABLE_API_KEY", "DEEPSEEK_API_KEY"):
+            monkeypatch.delenv(env, raising=False)
+        cfg = FableConfig(workspace=tmp_path, provider="deepseek", api_key=None)
+        with pytest.raises(ValueError, match="DEEPSEEK_API_KEY"):
+            create_provider(cfg)
+
     def test_no_auth_header_when_keyless(self):
         from fable_agent.llm.openai_provider import OpenAIProvider
 

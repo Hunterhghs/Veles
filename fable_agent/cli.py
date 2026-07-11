@@ -110,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument(
         "--provider",
         default=None,
-        help="anthropic | openai | ollama | lmstudio | openai-compatible "
+        help="anthropic | openai | deepseek | ollama | lmstudio | openai-compatible "
         "(ollama/lmstudio/openai-compatible need no API key)",
     )
     p_run.add_argument("--model", default=None, help="Model name, e.g. claude-sonnet-4-5, gpt-4o, or qwen2.5-coder.")
