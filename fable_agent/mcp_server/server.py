@@ -25,6 +25,7 @@ from pathlib import Path
 
 from fable_agent.config import FableConfig
 from fable_agent.memory import create_memory
+from fable_agent.playbooks import PLAYBOOKS, load_playbook
 from fable_agent.prompts import AGENT_ROLES, load_prompt
 from fable_agent.tools import default_registry
 
@@ -108,6 +109,18 @@ def build_server(config: FableConfig):
             return "No matching memories."
         return "\n".join(f"- [{e.category}] {e.content} (id={e.id})" for e in entries)
 
+    # --- Domain playbooks ----------------------------------------------------
+
+    @server.tool(name="get_playbook")
+    def get_playbook(topic: str) -> str:
+        """Fetch Fable's playbook (standards, structure, quality gates) for a
+        deliverable type: dashboard, dataset, report, website, research, or
+        writing. Consult it before starting such work and build to it."""
+        try:
+            return load_playbook(topic)
+        except KeyError:
+            return f"Unknown playbook {topic!r}. Available: {', '.join(sorted(PLAYBOOKS))}"
+
     # --- Full agent pipeline as a single tool --------------------------------
 
     @server.tool(name="run_agent")
@@ -127,6 +140,8 @@ def build_server(config: FableConfig):
 
     for role in AGENT_ROLES:
         _register_prompt(server, role)
+    for topic in PLAYBOOKS:
+        _register_playbook_prompt(server, topic)
 
     return server
 
@@ -135,6 +150,15 @@ def _register_prompt(server, role: str) -> None:
     @server.prompt(name=f"fable_{role}", description=f"Fable's {role} system prompt.")
     def prompt_fn() -> str:
         return load_prompt(role)
+
+
+def _register_playbook_prompt(server, topic: str) -> None:
+    @server.prompt(
+        name=f"fable_playbook_{topic}",
+        description=f"Fable's {topic} playbook: standards, structure, and quality gates.",
+    )
+    def playbook_fn() -> str:
+        return load_playbook(topic)
 
 
 def main(argv: list[str] | None = None) -> None:

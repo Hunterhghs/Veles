@@ -17,6 +17,7 @@ from pathlib import Path
 from fable_agent import __version__
 from fable_agent.config import FableConfig
 from fable_agent.memory import create_memory
+from fable_agent.playbooks import PLAYBOOKS, load_playbook
 from fable_agent.prompts import AGENT_ROLES, load_prompt
 from fable_agent.tools import default_registry
 
@@ -66,6 +67,15 @@ def cmd_prompts(args: argparse.Namespace) -> int:
     for role in roles:
         print(f"{'=' * 24} {role} {'=' * 24}")
         print(load_prompt(role))
+        print()
+    return 0
+
+
+def cmd_playbooks(args: argparse.Namespace) -> int:
+    topics = [args.topic] if args.topic else list(PLAYBOOKS)
+    for topic in topics:
+        print(f"{'=' * 24} {topic} {'=' * 24}")
+        print(load_playbook(topic))
         print()
     return 0
 
@@ -124,6 +134,10 @@ def main(argv: list[str] | None = None) -> int:
     p_prompts = sub.add_parser("prompts", help="Print exported system prompts.")
     p_prompts.add_argument("role", nargs="?", choices=AGENT_ROLES, help="A specific role (optional).")
     p_prompts.set_defaults(func=cmd_prompts)
+
+    p_playbooks = sub.add_parser("playbooks", help="Print domain playbooks (dashboards, reports, ...).")
+    p_playbooks.add_argument("topic", nargs="?", choices=PLAYBOOKS, help="A specific playbook (optional).")
+    p_playbooks.set_defaults(func=cmd_playbooks)
 
     p_tools = sub.add_parser("tools", help="List the tool suite and schemas.")
     p_tools.add_argument("--workspace", default=".")

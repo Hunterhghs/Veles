@@ -30,7 +30,8 @@ An open-source, extensible AI coding agent framework in Python, inspired by Fabl
 - **Model-agnostic, key-optional** — first-class Anthropic support plus any OpenAI-compatible endpoint (OpenAI, DeepSeek, Reasonix, OpenRouter, Ollama, LM Studio, vLLM, Groq, ...). Swap providers with one flag; runs entirely without an API key against local runtimes (`--provider ollama`). Reasoning models are handled correctly: `reasoning_content` (DeepSeek-style) is preserved across tool-call turns instead of being dropped.
 - **Tooling suite** — file read/write, exact-match diff editing, directory listing, regex search, glob, and shell execution. All file access is sandboxed to the chosen workspace directory.
 - **Memory & context store** — agents persist task summaries, decisions, and project facts. New sessions start with relevant memory injected, so context survives across runs (and is shared with external agents via MCP).
-- **Exportable interface** — an MCP server exposes the tools, the memory, the full agent pipeline, and the system prompts. A CLI wraps everything for humans and scripts.
+- **Domain playbooks** — built-in standards for business-analyst deliverables: dashboards, datasets, reports, websites, research, and business writing. The orchestrator consults them automatically; external agents fetch them over MCP.
+- **Exportable interface** — an MCP server exposes the tools, the memory, the playbooks, the full agent pipeline, and the system prompts. A CLI wraps everything for humans and scripts.
 
 ## Installation
 
@@ -108,7 +109,8 @@ fable run "Refactor utils.py" --provider ollama          # local, no API key
 
 # Inspect what Fable exports
 fable tools                 # tool suite with schemas
-fable prompts coder         # any system prompt (orchestrator|coder|verifier|architect)
+fable prompts coder         # any system prompt (orchestrator|coder|verifier|architect|reporter)
+fable playbooks dashboard   # domain standards (dashboard|dataset|report|website|research|writing)
 fable memory recent         # what the agent remembers
 fable memory search "api"   # keyword/FTS search over memory
 ```
@@ -145,8 +147,10 @@ It speaks MCP over stdio and exposes:
 |---|---|---|
 | Tool | `read_file`, `write_file`, `edit_file`, `list_dir`, `grep`, `glob`, `run_command` | Fable's full tooling suite, sandboxed to the workspace |
 | Tool | `memory_remember`, `memory_recall` | Shared long-term memory — external agents read/write the same store Fable uses |
+| Tool | `get_playbook` | Domain standards for a deliverable type (dashboard, dataset, report, website, research, writing) |
 | Tool | `run_agent` | Hand a whole task to Fable's orchestrator (plan → code → verify) and get the report |
 | Prompt | `fable_orchestrator`, `fable_coder`, `fable_verifier`, `fable_architect`, `fable_reporter` | Fable's system prompts, so external agents can adopt its roles |
+| Prompt | `fable_playbook_<topic>` | Each playbook as an MCP prompt (e.g. `fable_playbook_report`) |
 
 ### Claude Code
 
@@ -195,6 +199,30 @@ async with stdio_client(params) as (read, write):
         tools = await session.list_tools()
         result = await session.call_tool("grep", {"pattern": "TODO"})
 ```
+
+## Business-analyst workflows
+
+Fable ships domain playbooks that encode delivery standards for common freelance and company work. The orchestrator fetches the matching playbook before delegating, quotes its requirements in sub-agent objectives, and has the verifier check against them:
+
+| Playbook | Covers |
+|---|---|
+| `dashboard` | KPI selection, layout grid, chart-choice rules, single-file HTML/React/Streamlit stacks, responsive quality gates |
+| `dataset` | Cleaning checklist, data dictionary, reproducible pipeline, validation assertions, delivery packaging |
+| `report` | Finding → implication → action framing, assumptions log, client-ready structure, markdown → HTML → PDF chain |
+| `website` | Landing-page anatomy, design-system defaults, SEO/performance non-negotiables, free-tier deployment |
+| `research` | Research questions first, source provenance and hierarchy, triangulation, fact vs inference separation |
+| `writing` | Proposals, case studies, memos, docs, client emails — BLUF structure and tone calibration |
+
+Typical invocations:
+
+```bash
+fable run "Build a sales dashboard from data/q2_sales.csv with revenue, win rate, and pipeline KPIs"
+fable run "Clean data/leads_raw.csv into a delivery-ready dataset with a data dictionary"
+fable run "Write an executive report on Q2 churn drivers from data/churn.csv, deliver as PDF"
+fable run "Build a landing page for a bookkeeping consultancy, deploy-ready for GitHub Pages"
+```
+
+External agents get the same context: over MCP, call the `get_playbook` tool (or read the `fable_playbook_<topic>` prompts) and follow the standards when producing deliverables. The playbooks are plain markdown in [`fable_agent/playbooks/`](fable_agent/playbooks/) — edit them to match your own delivery style, and they update everywhere at once.
 
 ### Exporting just the prompts
 

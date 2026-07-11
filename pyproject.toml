@@ -37,7 +37,7 @@ Repository = "https://github.com/Hunterhghs/Fable-5.git"
 include = ["fable_agent*"]
 
 [tool.setuptools.package-data]
-fable_agent = ["prompts/*.md"]
+fable_agent = ["prompts/*.md", "playbooks/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -16,6 +16,7 @@ from fable_agent.config import FableConfig
 from fable_agent.llm import create_provider
 from fable_agent.llm.base import LLMProvider
 from fable_agent.memory import MemoryStore, create_memory
+from fable_agent.playbooks import PLAYBOOKS, load_playbook
 from fable_agent.prompts import load_prompt
 from fable_agent.tools.base import Tool, ToolRegistry, ToolResult
 
@@ -75,6 +76,32 @@ class DelegateTool(Tool):
             output=f"[{agent} {status} after {result.iterations} iteration(s)]\n\n{result.output}",
             success=result.success,
         )
+
+
+class PlaybookTool(Tool):
+    """Domain guidance for common business deliverables."""
+
+    name = "playbook"
+    description = (
+        "Fetch Fable's playbook for a type of deliverable: standards, "
+        "structure, and quality gates. Consult it before delegating work on "
+        "a dashboard, dataset, report, website, research task, or business "
+        "writing — and pass the relevant parts into the delegation objective."
+    )
+    parameters: dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "topic": {
+                "type": "string",
+                "enum": sorted(PLAYBOOKS),
+                "description": "The deliverable type.",
+            },
+        },
+        "required": ["topic"],
+    }
+
+    def execute(self, topic: str) -> ToolResult:
+        return ToolResult(output=load_playbook(topic))
 
 
 class RememberTool(Tool):
@@ -147,6 +174,7 @@ class Orchestrator(Agent):
         tools.register(
             DelegateTool(provider, self.config, on_event, max_delegations=self.config.max_delegations)
         )
+        tools.register(PlaybookTool())
         tools.register(RememberTool(self.memory))
         tools.register(RecallTool(self.memory))
 
