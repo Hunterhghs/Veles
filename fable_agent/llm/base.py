@@ -32,6 +32,10 @@ class Message:
     # For role="tool": the id of the tool call this message answers
     tool_call_id: str | None = None
     name: str | None = None
+    # Model thinking attached to an assistant turn (e.g. DeepSeek's
+    # reasoning_content). Preserved so it can be sent back on later turns
+    # instead of being silently dropped between tool calls.
+    reasoning: str | None = None
 
 
 @dataclass
@@ -51,6 +55,7 @@ class LLMResponse:
     tool_calls: list[ToolCall] = field(default_factory=list)
     stop_reason: str = "stop"
     usage: dict[str, int] = field(default_factory=dict)
+    reasoning: str | None = None  # thinking/reasoning text, if the model emits it
 
     @property
     def wants_tools(self) -> bool:

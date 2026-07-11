@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from importlib import resources
 
-AGENT_ROLES = ("orchestrator", "coder", "verifier", "architect")
+AGENT_ROLES = ("orchestrator", "coder", "verifier", "architect", "reporter")
 
 
 def load_prompt(role: str) -> str:

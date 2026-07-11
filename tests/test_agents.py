@@ -103,6 +103,76 @@ def test_orchestrator_delegates_to_subagent(config):
     assert any("create hello.py" in e.content for e in memory.recent(limit=5))
 
 
+def test_reporter_subagent_registered(config):
+    from fable_agent.agents.subagents import SUBAGENT_TYPES, create_subagent
+
+    assert "reporter" in SUBAGENT_TYPES
+    provider = ScriptedProvider([])
+    reporter = create_subagent("reporter", provider, config)
+    tool_names = {t.name for t in reporter.tools.all()}
+    # The reporter must be able to write documents and run chart/PDF commands.
+    assert {"write_file", "run_command", "read_file"} <= tool_names
+
+
+def test_agent_preserves_reasoning_across_tool_turns(config):
+    """DeepSeek-style reasoning_content must survive into the next request."""
+    provider = ScriptedProvider(
+        [
+            LLMResponse(
+                content="",
+                reasoning="I should list the directory first.",
+                tool_calls=[ToolCall(id="1", name="list_dir", arguments={})],
+            ),
+            LLMResponse(content="done"),
+        ]
+    )
+    agent = Agent(provider, "system", default_registry(config.workspace))
+    agent.run("task")
+
+    assistant_msgs = [m for m in provider.calls[1]["messages"] if m.role == "assistant"]
+    assert assistant_msgs[0].reasoning == "I should list the directory first."
+
+
+def test_openai_wire_format_roundtrips_reasoning():
+    from fable_agent.llm.base import Message
+    from fable_agent.llm.openai_provider import OpenAIProvider
+
+    msg = Message(
+        role="assistant",
+        content="",
+        reasoning="thinking...",
+        tool_calls=[ToolCall(id="t1", name="grep", arguments={"pattern": "x"})],
+    )
+    wire = OpenAIProvider._to_openai(msg)
+    assert wire["reasoning_content"] == "thinking..."
+    assert wire["tool_calls"][0]["function"]["name"] == "grep"
+
+    # And reasoning_content in a response is extracted.
+    class FakeResp:
+        def raise_for_status(self):
+            pass
+
+        @staticmethod
+        def json():
+            return {
+                "choices": [
+                    {
+                        "message": {"content": "hi", "reasoning_content": "deep thought"},
+                        "finish_reason": "stop",
+                    }
+                ]
+            }
+
+    class FakeClient:
+        def post(self, *a, **k):
+            return FakeResp()
+
+    provider = OpenAIProvider(api_key=None, base_url="http://localhost:1/v1")
+    provider.client = FakeClient()
+    response = provider.chat([Message(role="user", content="q")])
+    assert response.reasoning == "deep thought"
+
+
 def test_orchestrator_memory_injected_as_context(config):
     memory = JsonMemoryStore(config.memory_path)
     memory.remember("Project uses tabs, not spaces", category="project-fact")

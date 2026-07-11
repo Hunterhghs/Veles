@@ -25,8 +25,9 @@ An open-source, extensible AI coding agent framework in Python, inspired by Fabl
 
 ## Features
 
-- **Orchestrator & sub-agents** — the orchestrator never edits files itself; it plans and delegates. Sub-agents get role-appropriate tool access (the Architect can't write, the Verifier can run tests but not patch).
-- **Model-agnostic, key-optional** — first-class Anthropic support plus any OpenAI-compatible endpoint (OpenAI, Reasonix, OpenRouter, Ollama, LM Studio, vLLM, Groq, ...). Swap providers with one flag; runs entirely without an API key against local runtimes (`--provider ollama`).
+- **Orchestrator & sub-agents** — the orchestrator never edits files itself; it plans and delegates. Sub-agents get role-appropriate tool access (the Architect can't write, the Verifier can run tests but not patch). A dedicated **Reporter** produces executive-quality documents (markdown/HTML/PDF) with strict formatting standards.
+- **Production-grade prompts** — sub-agent prompts enforce zero code truncation, modern responsive UI defaults, wireframes and output schemas before implementation, and artifact formatting checks during verification.
+- **Model-agnostic, key-optional** — first-class Anthropic support plus any OpenAI-compatible endpoint (OpenAI, DeepSeek, Reasonix, OpenRouter, Ollama, LM Studio, vLLM, Groq, ...). Swap providers with one flag; runs entirely without an API key against local runtimes (`--provider ollama`). Reasoning models are handled correctly: `reasoning_content` (DeepSeek-style) is preserved across tool-call turns instead of being dropped.
 - **Tooling suite** — file read/write, exact-match diff editing, directory listing, regex search, glob, and shell execution. All file access is sandboxed to the chosen workspace directory.
 - **Memory & context store** — agents persist task summaries, decisions, and project facts. New sessions start with relevant memory injected, so context survives across runs (and is shared with external agents via MCP).
 - **Exportable interface** — an MCP server exposes the tools, the memory, the full agent pipeline, and the system prompts. A CLI wraps everything for humans and scripts.
@@ -145,7 +146,7 @@ It speaks MCP over stdio and exposes:
 | Tool | `read_file`, `write_file`, `edit_file`, `list_dir`, `grep`, `glob`, `run_command` | Fable's full tooling suite, sandboxed to the workspace |
 | Tool | `memory_remember`, `memory_recall` | Shared long-term memory — external agents read/write the same store Fable uses |
 | Tool | `run_agent` | Hand a whole task to Fable's orchestrator (plan → code → verify) and get the report |
-| Prompt | `fable_orchestrator`, `fable_coder`, `fable_verifier`, `fable_architect` | Fable's system prompts, so external agents can adopt its roles |
+| Prompt | `fable_orchestrator`, `fable_coder`, `fable_verifier`, `fable_architect`, `fable_reporter` | Fable's system prompts, so external agents can adopt its roles |
 
 ### Claude Code
 

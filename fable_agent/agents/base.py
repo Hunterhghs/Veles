@@ -64,7 +64,12 @@ class Agent:
             )
 
             messages.append(
-                Message(role="assistant", content=response.content, tool_calls=response.tool_calls)
+                Message(
+                    role="assistant",
+                    content=response.content,
+                    tool_calls=response.tool_calls,
+                    reasoning=response.reasoning,
+                )
             )
 
             if not response.wants_tools:

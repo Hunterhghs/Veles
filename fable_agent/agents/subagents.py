@@ -1,4 +1,4 @@
-"""Specialized sub-agents: Coder, Verifier, and Architect.
+"""Specialized sub-agents: Coder, Verifier, Architect, and Reporter.
 
 Each is the same core Agent loop with a role-specific system prompt and
 an appropriately restricted toolset:
@@ -6,6 +6,8 @@ an appropriately restricted toolset:
 - Coder: full read/write/execute access.
 - Verifier: read + execute (can run tests, cannot edit files).
 - Architect: read-only exploration.
+- Reporter: full read/write/execute access (writes documents, runs
+  chart/PDF generation commands).
 """
 
 from __future__ import annotations
@@ -100,10 +102,35 @@ class ArchitectAgent(Agent):
         )
 
 
+class ReporterAgent(Agent):
+    name = "reporter"
+
+    def __init__(self, provider: LLMProvider, config: FableConfig, on_event: EventHook | None = None):
+        ws = config.workspace
+        super().__init__(
+            provider=provider,
+            system_prompt=load_prompt("reporter"),
+            tools=_registry(
+                [
+                    ReadFileTool(ws),
+                    WriteFileTool(ws),
+                    ApplyDiffTool(ws),
+                    ListDirTool(ws),
+                    GrepTool(ws),
+                    GlobTool(ws),
+                    RunCommandTool(ws, timeout=config.command_timeout),
+                ]
+            ),
+            max_iterations=config.max_iterations,
+            on_event=on_event,
+        )
+
+
 SUBAGENT_TYPES = {
     "coder": CoderAgent,
     "verifier": VerifierAgent,
     "architect": ArchitectAgent,
+    "reporter": ReporterAgent,
 }
 
 

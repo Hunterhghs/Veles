@@ -35,7 +35,7 @@ class DelegateTool(Tool):
             "agent": {
                 "type": "string",
                 "enum": sorted(SUBAGENT_TYPES),
-                "description": "Which sub-agent to use: architect (plan), coder (implement), verifier (check).",
+                "description": "Which sub-agent to use: architect (plan), coder (implement), reporter (documents), verifier (check).",
             },
             "objective": {
                 "type": "string",

@@ -92,6 +92,7 @@ class OpenAIProvider(LLMProvider):
             tool_calls=tool_calls,
             stop_reason=choice.get("finish_reason", "stop"),
             usage=data.get("usage", {}),
+            reasoning=message.get("reasoning_content") or None,
         )
 
     @staticmethod
@@ -103,6 +104,10 @@ class OpenAIProvider(LLMProvider):
                 "content": msg.content,
             }
         out: dict[str, Any] = {"role": msg.role, "content": msg.content}
+        # Round-trip reasoning (DeepSeek et al.) so thinking context is not
+        # lost on tool-call turns. Compliant endpoints ignore unknown fields.
+        if msg.role == "assistant" and msg.reasoning:
+            out["reasoning_content"] = msg.reasoning
         if msg.role == "assistant" and msg.tool_calls:
             out["tool_calls"] = [
                 {
