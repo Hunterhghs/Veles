@@ -88,9 +88,10 @@ def resolve_api_key(provider: str) -> str | None:
         "anthropic": ["FABLE_API_KEY", "ANTHROPIC_API_KEY"],
         "openai": ["FABLE_API_KEY", "OPENAI_API_KEY"],
         "deepseek": ["FABLE_API_KEY", "DEEPSEEK_API_KEY"],
-        "openai-compatible": ["FABLE_API_KEY", "OPENAI_API_KEY"],
+        "openai-compatible": ["FABLE_API_KEY", "OPENAI_API_KEY", "DEEPSEEK_API_KEY"],
     }
     for env in candidates.get(provider, ["FABLE_API_KEY"]):
-        if os.environ.get(env):
-            return os.environ[env]
+        val = os.environ.get(env)
+        if val and val.strip():
+            return val.strip()
     return None
