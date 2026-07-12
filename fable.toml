@@ -1,0 +1,11 @@
+# Veles — General-purpose AI coding agent powered by Fable-5
+# Currently configured with DeepSeek API for H Heuristics business analytics.
+# Swap provider/model/playbooks to target any domain: game dev, research, infra, creative coding, etc.
+# Uses native DeepSeek provider (no openai-compatible wrapper needed)
+
+[fable]
+provider = "deepseek"
+model = "deepseek-chat"
+memory_backend = "sqlite"
+max_iterations = 20
+max_delegations = 8

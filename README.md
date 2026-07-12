@@ -1,6 +1,10 @@
-# Fable Agent
+# Veles
 
-An open-source, extensible AI coding agent framework in Python, inspired by Fable 5's capabilities. Fable plans tasks with an **Orchestrator**, delegates to specialized **sub-agents** (Coder, Verifier, Architect), works through a sandboxed **tooling suite**, keeps **long-term memory** across sessions, and exports everything — tools, memory, and system prompts — over the **Model Context Protocol (MCP)** so any other AI coding agent (Claude Code, Roo Code, Cursor, Reasonix, custom scripts) can use it.
+> **Powered by Fable-5.** Veles is a general-purpose AI coding agent framework — use it for anything: business analytics, video game development, scientific research, creative coding, infrastructure automation, and beyond.
+
+Veles is built on the open-source [Fable-5](https://github.com/Hunterhghs/Fable-5) architecture. It plans tasks with an **Orchestrator**, delegates to specialized **sub-agents** (Coder, Verifier, Architect, Reporter), works through a sandboxed **tooling suite**, keeps **long-term memory** across sessions, and exports everything — tools, memory, and system prompts — over the **Model Context Protocol (MCP)** so any other AI coding agent (Claude Code, Roo Code, Cursor, Reasonix, custom scripts) can use it.
+
+**Default configuration:** DeepSeek API with H Heuristics domain playbooks. Swap the provider, model, and playbooks to target any domain — Veles is purpose-built to be retooled.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -30,7 +34,7 @@ An open-source, extensible AI coding agent framework in Python, inspired by Fabl
 - **Model-agnostic, key-optional** — first-class Anthropic support plus any OpenAI-compatible endpoint (OpenAI, DeepSeek, Reasonix, OpenRouter, Ollama, LM Studio, vLLM, Groq, ...). Swap providers with one flag; runs entirely without an API key against local runtimes (`--provider ollama`). Reasoning models are handled correctly: `reasoning_content` (DeepSeek-style) is preserved across tool-call turns instead of being dropped.
 - **Tooling suite** — file read/write, exact-match diff editing, directory listing, regex search, glob, and shell execution. All file access is sandboxed to the chosen workspace directory.
 - **Memory & context store** — agents persist task summaries, decisions, and project facts. New sessions start with relevant memory injected, so context survives across runs (and is shared with external agents via MCP).
-- **Domain playbooks** — built-in standards for business-analyst deliverables: dashboards, datasets, reports, websites, research, and business writing. The orchestrator consults them automatically; external agents fetch them over MCP.
+- **Domain playbooks** — pluggable standards for any deliverable type. Ships with battle-tested business-analyst playbooks (dashboards, datasets, reports, websites, research, writing) as a starting point. Add your own for game design docs, scientific papers, infrastructure runbooks, or any other domain. The orchestrator consults them automatically; external agents fetch them over MCP.
 - **Exportable interface** — an MCP server exposes the tools, the memory, the playbooks, the full agent pipeline, and the system prompts. A CLI wraps everything for humans and scripts.
 
 ## Installation
@@ -200,9 +204,11 @@ async with stdio_client(params) as (read, write):
         result = await session.call_tool("grep", {"pattern": "TODO"})
 ```
 
-## Business-analyst workflows
+## Domain playbooks — use Veles for anything
 
-Fable ships domain playbooks that encode delivery standards for common freelance and company work. The orchestrator fetches the matching playbook before delegating, quotes its requirements in sub-agent objectives, and has the verifier check against them:
+Veles ships with six battle-tested business-analyst playbooks (H Heuristics' core domain), but the framework is built for **any** discipline. Add your own playbooks as markdown files — the orchestrator picks them up automatically.
+
+### Built-in playbooks (business analytics)
 
 | Playbook | Covers |
 |---|---|
@@ -213,13 +219,48 @@ Fable ships domain playbooks that encode delivery standards for common freelance
 | `research` | Research questions first, source provenance and hierarchy, triangulation, fact vs inference separation |
 | `writing` | Proposals, case studies, memos, docs, client emails — BLUF structure and tone calibration |
 
-Typical invocations:
+### Example: add your own playbook for game development
 
 ```bash
+# Create a game-design playbook
+cat > fable_agent/playbooks/gamedev.md << 'EOF'
+# Game Development Playbook
+
+## Deliverable standards
+- Game design documents: mechanics → systems → narrative → art direction
+- Code: entity-component architecture, tick-based game loop, asset pipeline
+- Testing: frame-rate benchmarks, save/load round-trip, deterministic replay
+
+## Quality gates
+- [ ] 60 FPS target on minimum-spec hardware
+- [ ] All game states reachable and recoverable
+- [ ] Input latency < 16ms
+EOF
+
+# Use it immediately
+fable run "Implement an inventory system for my RPG" --playbook gamedev
+```
+
+Typical invocations across domains:
+
+```bash
+# Business analytics (built-in)
 fable run "Build a sales dashboard from data/q2_sales.csv with revenue, win rate, and pipeline KPIs"
-fable run "Clean data/leads_raw.csv into a delivery-ready dataset with a data dictionary"
 fable run "Write an executive report on Q2 churn drivers from data/churn.csv, deliver as PDF"
-fable run "Build a landing page for a bookkeeping consultancy, deploy-ready for GitHub Pages"
+
+# Game development (custom playbook)
+fable run "Implement a quest system with branching dialogue for my Unity RPG"
+fable run "Add procedural dungeon generation with seed-based reproducibility"
+
+# General software engineering (no playbook needed)
+fable run "Add input validation to the signup endpoint"
+fable run "Refactor the auth module to support OAuth2"
+
+# Creative coding
+fable run "Generate an interactive particle system visualization with p5.js"
+
+# Infrastructure
+fable run "Write a Terraform module for a multi-region deployment on AWS"
 ```
 
 External agents get the same context: over MCP, call the `get_playbook` tool (or read the `fable_playbook_<topic>` prompts) and follow the standards when producing deliverables. The playbooks are plain markdown in [`fable_agent/playbooks/`](fable_agent/playbooks/) — edit them to match your own delivery style, and they update everywhere at once.
